@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PTD - Planejamento de Trabalho Docente</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <header class="text-center mb-4">
+      <h1 class="h2 text-primary">PTD</h1>
+      <p class="text-muted mb-0">Planejamento de Trabalho Docente — IFPE</p>
+    </header>
+
+    <!-- Aviso de rascunho salvo -->
+    <div class="alert alert-info alert-dismissible fade d-none mb-3" id="alert-rascunho" role="alert">
+      <strong>Você tem um PTD salvo para preencher depois.</strong> Deseja carregar?
+      <button type="button" class="btn btn-sm btn-primary ms-2" id="btn-carregar-rascunho">Carregar</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="btn-descartar-rascunho">Descartar</button>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Indicador de etapas (menu clicável) -->
+    <nav aria-label="Etapas do PTD" class="mb-4">
+      <ul class="nav nav-pills nav-fill flex-nowrap overflow-auto pb-2" id="step-indicator">
+        <li class="nav-item"><button type="button" class="nav-link step-pill active" data-step="1">1. Ano/Sem.</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="2">2. Docente</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="3">3. Disciplinas</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="4">4. Componentes</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="5">5. Atividades de Apoio ao ensino</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="6">6. Pesquisa</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="7">7. Extensão</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="8">8. Admin.</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="9">9. Distrib.</button></li>
+        <li class="nav-item"><button type="button" class="nav-link step-pill" data-step="10">10. Observ.</button></li>
+      </ul>
+    </nav>
+
+    <main>
+      <!-- Etapa 1: Ano e Semestre -->
+      <section class="step-card card shadow-sm mb-3" data-step="1">
+        <div class="card-body">
+          <h2 class="h5 card-title">Ano e Semestre Letivo</h2>
+          <div class="mb-3">
+            <label class="form-label">Carregar PTD existente (JSON)</label>
+            <div class="input-group">
+              <input type="file" class="form-control" id="input-file-ptd" accept=".json">
+              <button type="button" class="btn btn-outline-secondary" id="btn-carregar-ptd">Carregar</button>
+            </div>
+          </div>
+          <hr>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label">Ano letivo</label>
+              <input type="number" class="form-control" id="input-ano" min="2020" max="2030" placeholder="Ex: 2026">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Semestre</label>
+              <select class="form-select" id="input-semestre">
+                <option value="">Selecione</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Etapa 2: Dados do Docente -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="2">
+        <div class="card-body">
+          <h2 class="h5 card-title">Dados do Docente</h2>
+          <div class="row g-2">
+            <div class="col-12"><label class="form-label">Nome</label><input type="text" class="form-control" id="input-nome" placeholder="Nome completo"></div>
+            <div class="col-md-4"><label class="form-label">SIAPE</label><input type="text" class="form-control" id="input-siape"></div>
+            <div class="col-md-4"><label class="form-label">E-mail</label><input type="email" class="form-control" id="input-email"></div>
+            <div class="col-md-4"><label class="form-label">Campus</label><input type="text" class="form-control" id="input-campus"></div>
+            <div class="col-md-4"><label class="form-label">Regime de trabalho</label><select class="form-select" id="input-regime"><option value="20h">20h</option><option value="40h">40h</option><option value="DE">DE</option></select></div>
+            <div class="col-md-4"><label class="form-label">Grupo de trabalho</label><select class="form-select" id="input-grupo"><option value="Grupo I">Grupo I</option><option value="Grupo II">Grupo II</option><option value="Grupo III">Grupo III</option><option value="Grupo IV">Grupo IV</option><option value="Grupo V">Grupo V</option><option value="Grupo VI">Grupo VI</option></select></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Etapa 3: Disciplinas -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="3">
+        <div class="card-body">
+          <h2 class="h5 card-title">Cadastro de Disciplinas</h2>
+          <p class="text-muted small">Cadastre as disciplinas que ministra. Depois você seleciona quais irá desenvolver no semestre.</p>
+          <div class="mb-3">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-disciplina">+ Adicionar disciplina</button>
+          </div>
+          <div id="lista-disciplinas"></div>
+        </div>
+      </section>
+
+      <!-- Etapa 4: Componentes Curriculares e Turmas -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="4">
+        <div class="card-body">
+          <h2 class="h5 card-title">Componentes Curriculares e Turmas</h2>
+          <p class="text-muted small">Selecione as disciplinas que irá ministrar e associe turma e turno a cada uma.</p>
+          <div id="container-componentes"></div>
+        </div>
+      </section>
+
+      <!-- Etapa 5: Atividades de Apoio ao ensino -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="5">
+        <div class="card-body">
+          <h2 class="h5 card-title">Atividades de Apoio ao ensino</h2>
+          <p class="text-muted small">Selecione uma ou mais atividades e preencha local, horário, portaria e CH semanal.</p>
+          <div id="container-atividades"></div>
+        </div>
+      </section>
+
+      <!-- Etapa 6: Pesquisa e Pós-graduação -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="6">
+        <div class="card-body">
+          <h2 class="h5 card-title">Atividades de Pesquisa e Pós-graduação</h2>
+          <p class="text-muted small">Selecione as atividades e informe a carga horária de cada uma.</p>
+          <div id="container-pesquisa"></div>
+        </div>
+      </section>
+
+      <!-- Etapa 7: Extensão -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="7">
+        <div class="card-body">
+          <h2 class="h5 card-title">Atividades de Extensão</h2>
+          <p class="text-muted small">Selecione as atividades e preencha projeto, tipo de participação, início/término (M/A) e CH semanal.</p>
+          <div id="container-extensao"></div>
+        </div>
+      </section>
+
+      <!-- Etapa 8: Administrativo-pedagógicas -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="8">
+        <div class="card-body">
+          <h2 class="h5 card-title">Atividades Administrativo-pedagógicas</h2>
+          <p class="text-muted small">Selecione as atividades e preencha portaria, início/término (M/A), CH semanal e CH máxima/semanal.</p>
+          <div id="container-admin"></div>
+        </div>
+      </section>
+
+      <!-- Etapa 9: Distribuição da carga horária -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="9">
+        <div class="card-body">
+          <h2 class="h5 card-title">Distribuição da carga horária</h2>
+          <div class="table-responsive">
+            <table class="table table-bordered" id="tabela-distribuicao">
+              <tbody>
+                <tr><td>Aulas</td><td class="text-end" id="dist-aulas">0</td></tr>
+                <tr><td>Preparação de aulas</td><td class="text-end" id="dist-preparacao">0</td></tr>
+                <tr><td>Apoio ao ensino</td><td class="text-end" id="dist-apoio">0</td></tr>
+                <tr><td>Pesquisa e pós-graduação</td><td class="text-end" id="dist-pesquisa">0</td></tr>
+                <tr><td>Extensão</td><td class="text-end" id="dist-extensao">0</td></tr>
+                <tr><td>Administrativo-pedagógico</td><td class="text-end" id="dist-admin">0</td></tr>
+                <tr class="table-primary fw-bold"><td>Soma/Total</td><td class="text-end" id="dist-total">0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Etapa 10: Complemento/Observações -->
+      <section class="step-card card shadow-sm mb-3 d-none" data-step="10">
+        <div class="card-body">
+          <h2 class="h5 card-title">COMPLEMENTO/OBSERVAÇÕES</h2>
+          <label class="form-label">Texto livre para complementos ou observações</label>
+          <textarea class="form-control" id="input-complemento" rows="6" placeholder="Digite aqui..."></textarea>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-success" id="btn-finalizar">Baixar JSON</button>
+            <button type="button" class="btn btn-outline-success" id="btn-baixar-txt">Baixar TXT</button>
+            <button type="button" class="btn btn-outline-secondary" id="btn-salvar-local">Salvar no navegador</button>
+            <button type="button" class="btn btn-outline-primary" id="btn-salvar-depois">Salvar PTD para preencher depois</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Navegação entre etapas -->
+    <footer class="d-flex justify-content-between mt-4 pt-3 border-top">
+      <button type="button" class="btn btn-outline-secondary" id="btn-anterior" disabled>Anterior</button>
+      <button type="button" class="btn btn-primary" id="btn-proximo">Próximo</button>
+    </footer>
+  </div>
+
+  <!-- Modal: adicionar disciplina -->
+  <div class="modal fade" id="modal-disciplina" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Nova disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-2"><label class="form-label">Nome</label><input type="text" class="form-control" id="mod-disc-nome"></div>
+          <div class="mb-2"><label class="form-label">Carga horária total (h)</label><input type="number" class="form-control" id="mod-disc-carga-total" step="0.5" min="0"></div>
+          <div class="mb-2"><label class="form-label">Aulas por semana (1-9)</label><input type="number" class="form-control" id="mod-disc-aulas" min="1" max="9"></div>
+          <div class="mb-2"><label class="form-label">Duração (min)</label><select class="form-select" id="mod-disc-duracao"><option value="45">45</option><option value="50">50</option><option value="60">60</option></select></div>
+          <div class="mb-2"><label class="form-label">Carga horária de preparação (h)</label><input type="number" class="form-control" id="mod-disc-preparacao" step="0.5" min="0"></div>
+          <p class="small text-muted mb-0">A carga horária semanal será calculada automaticamente.</p>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="mod-disc-salvar">Salvar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
