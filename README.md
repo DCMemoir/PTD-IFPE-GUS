@@ -5,7 +5,7 @@ PTD - Planejamento de Trabalho Docente
 ======================================
 
 Este projeto tem como objetivo auxiliar o planejamento docente do IFPE campus Garanhuns.  
-O aplicativo chama-se **PTD**. Foi desenvolvido com IA pelo editor **Curso** via prompts (sem codificação direta deste usuário).  
+O aplicativo chama-se **PTD**. Foi desenvolvido com IA usando o editor [**Cursor**] (https://cursor.com/) via prompts (sem codificação direta deste usuário).  
 
 Nesta primeira versão, o PTD será um aplicativo web que:
 
