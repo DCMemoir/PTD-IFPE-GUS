@@ -142,11 +142,19 @@
     if (step === 9) atualizarDistribuicao();
   }
 
+  function showMsg(texto, tipo) {
+    const el = document.getElementById('msg-global');
+    if (!el) return;
+    el.className = 'alert alert-' + (tipo || 'info') + ' mt-2';
+    el.textContent = texto;
+    el.classList.remove('d-none');
+  }
+
   function readStep1() {
     const ano = parseInt(document.getElementById('input-ano').value, 10);
     const semestre = parseInt(document.getElementById('input-semestre').value, 10);
-    if (!ano || ano < 2020 || ano > 2030) { alert('Informe um ano válido (2020-2030).'); return false; }
-    if (semestre !== 1 && semestre !== 2) { alert('Selecione o semestre 1 ou 2.'); return false; }
+    if (!ano || ano < 2020 || ano > 2030) { showMsg('Informe um ano válido (2020-2030).', 'danger'); return false; }
+    if (semestre !== 1 && semestre !== 2) { showMsg('Selecione o semestre 1 ou 2.', 'danger'); return false; }
     state.ano = ano;
     state.semestre = semestre;
     return true;
@@ -155,13 +163,15 @@
   function readStep2() {
     state.docente = {
       nome: document.getElementById('input-nome').value.trim(),
-      siape: document.getElementById('input-siape').value.trim(),
+      siape: document.getElementById('input-siape').value.trim().replace(/\D/g, ''),
       email: document.getElementById('input-email').value.trim(),
       campus: document.getElementById('input-campus').value.trim(),
       regime_trabalho: document.getElementById('input-regime').value,
       grupo_trabalho: document.getElementById('input-grupo').value
     };
-    if (!state.docente.nome) { alert('Informe o nome do docente.'); return false; }
+    if (!state.docente.nome) { showMsg('Informe o nome do docente.', 'danger'); return false; }
+    if (state.docente.siape && !/^\d+$/.test(state.docente.siape)) { showMsg('SIAPE deve conter apenas números.', 'danger'); return false; }
+    document.getElementById('input-siape').value = state.docente.siape;
     return true;
   }
 
@@ -184,8 +194,8 @@
     const aulas = parseInt(document.getElementById('mod-disc-aulas').value, 10) || 1;
     const duracao = parseInt(document.getElementById('mod-disc-duracao').value, 10) || 45;
     const preparacao = parseFloat(document.getElementById('mod-disc-preparacao').value) || 0;
-    if (!nome) { alert('Informe o nome da disciplina.'); return; }
-    if (aulas < 1 || aulas > 9) { alert('Aulas por semana entre 1 e 9.'); return; }
+    if (!nome) { showMsg('Informe o nome da disciplina.', 'danger'); return; }
+    if (aulas < 1 || aulas > 9) { showMsg('Aulas por semana entre 1 e 9.', 'danger'); return; }
     const chSemanal = cargaHorariaSemanal(duracao, aulas);
     state.disciplinas.push({ nome, carga_horaria_total: cargaTotal, aulas_por_semana: aulas, duracao_minutos: duracao, carga_horaria_semanal: chSemanal, carga_horaria_preparacao: preparacao });
     bsModal.hide();
@@ -251,7 +261,14 @@
       const idx = parseInt(sel.value, 10);
       if (state.disciplinas[idx] == null) return;
       const nomeDisc = state.disciplinas[idx].nome;
-      const turmaOpts = TURMAS_FLAT.map((t, i) => `<option value="${i}">${escapeHtml(t)}</option>`).join('');
+      let globalIdx = 0;
+      const turmaOpts = SECOES_TURMAS.map(secao => {
+        const opts = secao.turmas.map(t => {
+          const i = globalIdx++;
+          return `<option value="${i}">${escapeHtml(t)}</option>`;
+        }).join('');
+        return `<optgroup label="${escapeHtml(secao.secao)}">${opts}</optgroup>`;
+      }).join('');
       const turnoOpts = TURNOS.map(t => `<option value="${t}">${t}</option>`).join('');
       const bloco = document.createElement('div');
       bloco.className = 'border rounded p-2 mb-2';
@@ -291,6 +308,7 @@
     const container = document.getElementById('container-atividades');
     let html = renderCheckboxList('container-atividades', ATIVIDADES_APOIO, 'apoio-cb');
     html += '<button type="button" class="btn btn-sm btn-primary my-3" id="ativ-apoio-add">Adicionar selecionadas</button>';
+    html += '<div id="ativ-apoio-pendentes" class="mb-3"></div>';
     html += '<div id="ativ-apoio-lista"></div>';
     container.innerHTML = html;
 
@@ -310,18 +328,42 @@
     refreshApoioLista();
 
     document.getElementById('ativ-apoio-add').addEventListener('click', () => {
+      const pendentes = document.getElementById('ativ-apoio-pendentes');
       document.querySelectorAll('input[name="apoio-cb"]:checked').forEach(cb => {
         const nome = ATIVIDADES_APOIO[parseInt(cb.value, 10)];
-        if (state.atividades.some(a => a.atividade === nome)) return;
-        const local = prompt('Local (ex: Lab. 11):', '') || '';
-        const horario = prompt('Horário (ex: 14h às 16h):', '') || '';
-        const portaria = prompt('Portaria:', '') || '';
-        let ch = parseFloat(prompt('CH semanal (horas):', '2'), 10);
-        if (isNaN(ch) || ch < 0) ch = 0;
-        state.atividades.push({ atividade: nome, local, horario, portaria, ch_semanal: Math.round(ch * 100) / 100 });
+        if (state.atividades.some(a => a.atividade === nome)) { cb.checked = false; return; }
+        const card = document.createElement('div');
+        card.className = 'border rounded p-3 mb-2 bg-light';
+        card.innerHTML = `
+          <div class="fw-bold mb-2">${escapeHtml(nome)}</div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-3"><label class="form-label small">Local</label><input type="text" class="form-control form-control-sm apoio-inp-local" placeholder="Ex: Lab. 11"></div>
+            <div class="col-md-3"><label class="form-label small">Horário</label><input type="time" class="form-control form-control-sm apoio-inp-horario"></div>
+            <div class="col-md-3"><label class="form-label small">Portaria</label><input type="text" class="form-control form-control-sm apoio-inp-portaria"></div>
+            <div class="col-md-2"><label class="form-label small">CH semanal (h)</label><input type="number" class="form-control form-control-sm apoio-inp-ch" step="0.5" min="0" value="2"></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-success apoio-confirm">Confirmar</button>
+        `;
+        const localInp = card.querySelector('.apoio-inp-local');
+        const horarioInp = card.querySelector('.apoio-inp-horario');
+        const portariaInp = card.querySelector('.apoio-inp-portaria');
+        const chInp = card.querySelector('.apoio-inp-ch');
+        card.querySelector('.apoio-confirm').addEventListener('click', () => {
+          let ch = parseFloat(chInp.value, 10);
+          if (isNaN(ch) || ch < 0) ch = 0;
+          state.atividades.push({
+            atividade: nome,
+            local: localInp.value.trim(),
+            horario: horarioInp.value || '', // type=time retorna HH:MM
+            portaria: portariaInp.value.trim(),
+            ch_semanal: Math.round(ch * 100) / 100
+          });
+          card.remove();
+          refreshApoioLista();
+        });
+        pendentes.appendChild(card);
         cb.checked = false;
       });
-      refreshApoioLista();
     });
   }
 
@@ -330,6 +372,7 @@
     const container = document.getElementById('container-pesquisa');
     let html = renderCheckboxList('container-pesquisa', ATIVIDADES_PESQUISA, 'pesquisa-cb');
     html += '<button type="button" class="btn btn-sm btn-primary my-3" id="ativ-pesquisa-add">Adicionar selecionadas</button>';
+    html += '<div id="ativ-pesquisa-pendentes" class="mb-3"></div>';
     html += '<div id="ativ-pesquisa-lista"></div>';
     container.innerHTML = html;
 
@@ -348,15 +391,29 @@
     refreshPesquisaLista();
 
     document.getElementById('ativ-pesquisa-add').addEventListener('click', () => {
+      const pendentes = document.getElementById('ativ-pesquisa-pendentes');
       document.querySelectorAll('input[name="pesquisa-cb"]:checked').forEach(cb => {
         const nome = ATIVIDADES_PESQUISA[parseInt(cb.value, 10)];
-        if (state.atividades_pesquisa_pos.some(a => a.atividade === nome)) return;
-        let ch = parseFloat(prompt('Carga horária (horas):', '4'), 10);
-        if (isNaN(ch) || ch < 0) ch = 0;
-        state.atividades_pesquisa_pos.push({ atividade: nome, carga_horaria: Math.round(ch * 100) / 100 });
+        if (state.atividades_pesquisa_pos.some(a => a.atividade === nome)) { cb.checked = false; return; }
+        const card = document.createElement('div');
+        card.className = 'border rounded p-3 mb-2 bg-light d-flex align-items-center gap-3 flex-wrap';
+        card.innerHTML = `
+          <span class="atividade-texto fw-bold">${escapeHtml(nome)}</span>
+          <label class="small mb-0">Carga horária (h):</label>
+          <input type="number" class="form-control form-control-sm w-auto pesquisa-inp-ch" step="0.5" min="0" value="4" style="max-width:100px">
+          <button type="button" class="btn btn-sm btn-success pesquisa-confirm">Confirmar</button>
+        `;
+        const chInp = card.querySelector('.pesquisa-inp-ch');
+        card.querySelector('.pesquisa-confirm').addEventListener('click', () => {
+          let ch = parseFloat(chInp.value, 10);
+          if (isNaN(ch) || ch < 0) ch = 0;
+          state.atividades_pesquisa_pos.push({ atividade: nome, carga_horaria: Math.round(ch * 100) / 100 });
+          card.remove();
+          refreshPesquisaLista();
+        });
+        pendentes.appendChild(card);
         cb.checked = false;
       });
-      refreshPesquisaLista();
     });
   }
 
@@ -365,6 +422,7 @@
     const container = document.getElementById('container-extensao');
     let html = renderCheckboxList('container-extensao', ATIVIDADES_EXTENSAO, 'ext-cb');
     html += '<button type="button" class="btn btn-sm btn-primary my-3" id="ativ-ext-add">Adicionar selecionadas</button>';
+    html += '<div id="ativ-ext-pendentes" class="mb-3"></div>';
     html += '<div id="ativ-ext-lista"></div>';
     container.innerHTML = html;
 
@@ -384,22 +442,42 @@
     refreshExtLista();
 
     document.getElementById('ativ-ext-add').addEventListener('click', () => {
+      const pendentes = document.getElementById('ativ-ext-pendentes');
+      const anoAtual = String(state.ano || new Date().getFullYear());
       document.querySelectorAll('input[name="ext-cb"]:checked').forEach(cb => {
         const nome = ATIVIDADES_EXTENSAO[parseInt(cb.value, 10)];
-        const projeto = prompt('Projeto:', '') || '';
-        const tipo = prompt('Tipo de participação:', '') || '';
-        const mesIni = prompt('Início - Mês (1-12):', '3') || '1';
-        const anoIni = prompt('Início - Ano:', String(state.ano || new Date().getFullYear())) || '2026';
-        const mesFim = prompt('Término - Mês (1-12):', '7') || '1';
-        const anoFim = prompt('Término - Ano:', String(state.ano || new Date().getFullYear())) || '2026';
-        let ch = parseFloat(prompt('C.H. Semanal (horas):', '2'), 10);
-        if (isNaN(ch) || ch < 0) ch = 0;
-        const inicio_ma = (parseInt(mesIni, 10) < 10 ? '0' + mesIni : mesIni) + '/' + anoIni;
-        const termino_ma = (parseInt(mesFim, 10) < 10 ? '0' + mesFim : mesFim) + '/' + anoFim;
-        state.atividades_extensao.push({ atividade: nome, projeto, tipo_participacao: tipo, inicio_ma, termino_ma, ch_semanal: Math.round(ch * 100) / 100 });
+        if (state.atividades_extensao.some(a => a.atividade === nome)) { cb.checked = false; return; }
+        const card = document.createElement('div');
+        card.className = 'border rounded p-3 mb-2 bg-light';
+        card.innerHTML = `
+          <div class="fw-bold mb-2">${escapeHtml(nome)}</div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-4"><label class="form-label small">Projeto</label><input type="text" class="form-control form-control-sm ext-inp-projeto"></div>
+            <div class="col-md-4"><label class="form-label small">Tipo de participação</label><input type="text" class="form-control form-control-sm ext-inp-tipo"></div>
+            <div class="col-md-2"><label class="form-label small">Início (M/A)</label><input type="text" class="form-control form-control-sm ext-inp-inicio" placeholder="MM/AAAA" value="03/${anoAtual}"></div>
+            <div class="col-md-2"><label class="form-label small">Término (M/A)</label><input type="text" class="form-control form-control-sm ext-inp-termino" placeholder="MM/AAAA" value="07/${anoAtual}"></div>
+            <div class="col-md-2"><label class="form-label small">CH semanal (h)</label><input type="number" class="form-control form-control-sm ext-inp-ch" step="0.5" min="0" value="2"></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-success ext-confirm">Confirmar</button>
+        `;
+        const getInp = (cls) => card.querySelector(cls);
+        card.querySelector('.ext-confirm').addEventListener('click', () => {
+          let ch = parseFloat(getInp('.ext-inp-ch').value, 10);
+          if (isNaN(ch) || ch < 0) ch = 0;
+          state.atividades_extensao.push({
+            atividade: nome,
+            projeto: getInp('.ext-inp-projeto').value.trim(),
+            tipo_participacao: getInp('.ext-inp-tipo').value.trim(),
+            inicio_ma: getInp('.ext-inp-inicio').value.trim() || '01/' + anoAtual,
+            termino_ma: getInp('.ext-inp-termino').value.trim() || '12/' + anoAtual,
+            ch_semanal: Math.round(ch * 100) / 100
+          });
+          card.remove();
+          refreshExtLista();
+        });
+        pendentes.appendChild(card);
         cb.checked = false;
       });
-      refreshExtLista();
     });
   }
 
@@ -408,6 +486,7 @@
     const container = document.getElementById('container-admin');
     let html = renderCheckboxList('container-admin', ATIVIDADES_ADMIN, 'admin-cb');
     html += '<button type="button" class="btn btn-sm btn-primary my-3" id="ativ-admin-add">Adicionar selecionadas</button>';
+    html += '<div id="ativ-admin-pendentes" class="mb-3"></div>';
     html += '<div id="ativ-admin-lista"></div>';
     container.innerHTML = html;
 
@@ -427,23 +506,44 @@
     refreshAdminLista();
 
     document.getElementById('ativ-admin-add').addEventListener('click', () => {
+      const pendentes = document.getElementById('ativ-admin-pendentes');
+      const anoAtual = String(state.ano || new Date().getFullYear());
       document.querySelectorAll('input[name="admin-cb"]:checked').forEach(cb => {
         const nome = ATIVIDADES_ADMIN[parseInt(cb.value, 10)];
-        const portaria = prompt('Portaria:', '') || '';
-        const mesIni = prompt('Início - Mês (1-12):', '3') || '1';
-        const anoIni = prompt('Início - Ano:', String(state.ano || new Date().getFullYear())) || '2026';
-        const mesFim = prompt('Término - Mês (1-12):', '7') || '1';
-        const anoFim = prompt('Término - Ano:', String(state.ano || new Date().getFullYear())) || '2026';
-        let ch = parseFloat(prompt('C.H. Semanal (horas):', '2'), 10);
-        if (isNaN(ch) || ch < 0) ch = 0;
-        let chMax = parseFloat(prompt('C.H. Máxima/Semanal (horas):', '4'), 10);
-        if (isNaN(chMax) || chMax < 0) chMax = ch;
-        const inicio_ma = (parseInt(mesIni, 10) < 10 ? '0' + mesIni : mesIni) + '/' + anoIni;
-        const termino_ma = (parseInt(mesFim, 10) < 10 ? '0' + mesFim : mesFim) + '/' + anoFim;
-        state.atividades_admin_pedagogicas.push({ atividade: nome, portaria, inicio_ma, termino_ma, ch_semanal: Math.round(ch * 100) / 100, ch_maxima_semanal: Math.round(chMax * 100) / 100 });
+        if (state.atividades_admin_pedagogicas.some(a => a.atividade === nome)) { cb.checked = false; return; }
+        const card = document.createElement('div');
+        card.className = 'border rounded p-3 mb-2 bg-light';
+        card.innerHTML = `
+          <div class="fw-bold mb-2">${escapeHtml(nome)}</div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-3"><label class="form-label small">Portaria</label><input type="text" class="form-control form-control-sm admin-inp-portaria"></div>
+            <div class="col-md-2"><label class="form-label small">Início (M/A)</label><input type="text" class="form-control form-control-sm admin-inp-inicio" placeholder="MM/AAAA" value="03/${anoAtual}"></div>
+            <div class="col-md-2"><label class="form-label small">Término (M/A)</label><input type="text" class="form-control form-control-sm admin-inp-termino" placeholder="MM/AAAA" value="07/${anoAtual}"></div>
+            <div class="col-md-2"><label class="form-label small">CH semanal (h)</label><input type="number" class="form-control form-control-sm admin-inp-ch" step="0.5" min="0" value="2"></div>
+            <div class="col-md-2"><label class="form-label small">CH máx. semanal (h)</label><input type="number" class="form-control form-control-sm admin-inp-chmax" step="0.5" min="0" value="4"></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-success admin-confirm">Confirmar</button>
+        `;
+        const getInp = (cls) => card.querySelector(cls);
+        card.querySelector('.admin-confirm').addEventListener('click', () => {
+          let ch = parseFloat(getInp('.admin-inp-ch').value, 10);
+          if (isNaN(ch) || ch < 0) ch = 0;
+          let chMax = parseFloat(getInp('.admin-inp-chmax').value, 10);
+          if (isNaN(chMax) || chMax < 0) chMax = ch;
+          state.atividades_admin_pedagogicas.push({
+            atividade: nome,
+            portaria: getInp('.admin-inp-portaria').value.trim(),
+            inicio_ma: getInp('.admin-inp-inicio').value.trim() || '01/' + anoAtual,
+            termino_ma: getInp('.admin-inp-termino').value.trim() || '12/' + anoAtual,
+            ch_semanal: Math.round(ch * 100) / 100,
+            ch_maxima_semanal: Math.round(chMax * 100) / 100
+          });
+          card.remove();
+          refreshAdminLista();
+        });
+        pendentes.appendChild(card);
         cb.checked = false;
       });
-      refreshAdminLista();
     });
   }
 
@@ -588,21 +688,21 @@
   document.getElementById('btn-finalizar').addEventListener('click', () => {
     state.complemento_observacoes = document.getElementById('input-complemento').value.trim();
     downloadJSON();
-    alert('Arquivo JSON baixado. Nome: ptd_' + state.ano + '_' + state.semestre + '.json');
+    showMsg('Arquivo JSON baixado. Nome: ptd_' + state.ano + '_' + state.semestre + '.json', 'success');
   });
 
   document.getElementById('btn-baixar-txt').addEventListener('click', () => {
     downloadTXT();
-    alert('Arquivo TXT baixado.');
+    showMsg('Arquivo TXT baixado.', 'success');
   });
 
   document.getElementById('btn-salvar-depois').addEventListener('click', () => {
     state.complemento_observacoes = document.getElementById('input-complemento').value.trim();
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(buildPTDData()));
-      alert('PTD salvo para preencher depois. Ao reabrir o aplicativo, você poderá carregar este rascunho.');
+      showMsg('PTD salvo para preencher depois. Ao reabrir o aplicativo, você poderá carregar este rascunho.', 'success');
     } catch (e) {
-      alert('Erro ao salvar: ' + e.message);
+      showMsg('Erro ao salvar: ' + e.message, 'danger');
     }
   });
 
@@ -611,9 +711,9 @@
     const key = 'ptd_' + state.ano + '_' + state.semestre;
     try {
       localStorage.setItem(key, JSON.stringify(buildPTDData()));
-      alert('PTD salvo no navegador (chave: ' + key + ').');
+      showMsg('PTD salvo no navegador (chave: ' + key + ').', 'success');
     } catch (e) {
-      alert('Erro ao salvar: ' + e.message);
+      showMsg('Erro ao salvar: ' + e.message, 'danger');
     }
   });
 
@@ -626,15 +726,17 @@
 
   document.getElementById('btn-anterior').addEventListener('click', () => goToStep(currentStep - 1));
 
-  // Carregar PTD de arquivo JSON
+  // Carregar PTD de arquivo JSON ou TXT (conteúdo JSON)
   document.getElementById('btn-carregar-ptd').addEventListener('click', () => {
     const input = document.getElementById('input-file-ptd');
     const file = input.files && input.files[0];
-    if (!file) { alert('Escolha um arquivo JSON.'); return; }
+    if (!file) { showMsg('Escolha um arquivo JSON ou TXT.', 'warning'); return; }
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const data = JSON.parse(reader.result);
+        let raw = reader.result;
+        if (typeof raw !== 'string') raw = '';
+        const data = JSON.parse(raw);
         state = {
           ano: data.ano,
           semestre: data.semestre,
@@ -658,9 +760,9 @@
         document.getElementById('input-complemento').value = state.complemento_observacoes || '';
         renderListaDisciplinas();
         input.value = '';
-        alert('PTD carregado. Revise as etapas e avance para editar ou baixar novamente.');
+        showMsg('PTD carregado. Revise as etapas e avance para editar ou baixar novamente.', 'success');
       } catch (e) {
-        alert('Arquivo inválido: ' + e.message);
+        showMsg('Arquivo inválido (use JSON ou TXT com conteúdo JSON): ' + e.message, 'danger');
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -705,6 +807,11 @@
   document.getElementById('btn-descartar-rascunho').addEventListener('click', () => {
     localStorage.removeItem(DRAFT_KEY);
     document.getElementById('alert-rascunho').classList.add('d-none');
+  });
+
+  // SIAPE: aceitar apenas números na digitação
+  document.getElementById('input-siape').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '');
   });
 
   // Inicialização

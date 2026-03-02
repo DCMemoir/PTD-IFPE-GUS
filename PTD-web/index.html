@@ -14,6 +14,8 @@
       <p class="text-muted mb-0">Planejamento de Trabalho Docente — IFPE</p>
     </header>
 
+    <!-- Mensagem global (sucesso/erro) -->
+    <div class="alert d-none mb-3" id="msg-global" role="alert"></div>
     <!-- Aviso de rascunho salvo -->
     <div class="alert alert-info alert-dismissible fade d-none mb-3" id="alert-rascunho" role="alert">
       <strong>Você tem um PTD salvo para preencher depois.</strong> Deseja carregar?
@@ -44,9 +46,9 @@
         <div class="card-body">
           <h2 class="h5 card-title">Ano e Semestre Letivo</h2>
           <div class="mb-3">
-            <label class="form-label">Carregar PTD existente (JSON)</label>
+            <label class="form-label">Carregar PTD existente (JSON ou TXT)</label>
             <div class="input-group">
-              <input type="file" class="form-control" id="input-file-ptd" accept=".json">
+              <input type="file" class="form-control" id="input-file-ptd" accept=".json,.txt">
               <button type="button" class="btn btn-outline-secondary" id="btn-carregar-ptd">Carregar</button>
             </div>
           </div>
@@ -73,9 +75,9 @@
         <div class="card-body">
           <h2 class="h5 card-title">Dados do Docente</h2>
           <div class="row g-2">
-            <div class="col-12"><label class="form-label">Nome</label><input type="text" class="form-control" id="input-nome" placeholder="Nome completo"></div>
-            <div class="col-md-4"><label class="form-label">SIAPE</label><input type="text" class="form-control" id="input-siape"></div>
-            <div class="col-md-4"><label class="form-label">E-mail</label><input type="email" class="form-control" id="input-email"></div>
+            <div class="col-12"><label class="form-label">Nome</label><input type="text" class="form-control" id="input-nome" placeholder="Nome completo" autocomplete="name"></div>
+            <div class="col-md-4"><label class="form-label">SIAPE</label><input type="text" class="form-control" id="input-siape" inputmode="numeric" pattern="[0-9]*" maxlength="7" placeholder="Apenas números" title="Apenas números"></div>
+            <div class="col-md-4"><label class="form-label">E-mail</label><input type="email" class="form-control" id="input-email" placeholder="exemplo@ifpe.edu.br" autocomplete="email"></div>
             <div class="col-md-4"><label class="form-label">Campus</label><input type="text" class="form-control" id="input-campus"></div>
             <div class="col-md-4"><label class="form-label">Regime de trabalho</label><select class="form-select" id="input-regime"><option value="20h">20h</option><option value="40h">40h</option><option value="DE">DE</option></select></div>
             <div class="col-md-4"><label class="form-label">Grupo de trabalho</label><select class="form-select" id="input-grupo"><option value="Grupo I">Grupo I</option><option value="Grupo II">Grupo II</option><option value="Grupo III">Grupo III</option><option value="Grupo IV">Grupo IV</option><option value="Grupo V">Grupo V</option><option value="Grupo VI">Grupo VI</option></select></div>
