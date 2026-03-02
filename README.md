@@ -52,7 +52,16 @@ Você será guiado passo a passo para preencher as informações do PTD.
 
 # A FAZER
 
-1. Alguns pop-ups surgem no navegador para serem preenchidos. Está "feio" e precisa ser alterado.
-2. Aguns campos de preenchimento não estão bem definidos em relação aos seus valores (por exemplo, no campo e-mail, pode-se digitar qualquer coisa).
-3. O arquivo JSON e o TXT, que são texto puro, não estão no modelo fornecido pelo IFPE. Será necessário outra etapa para formatação dos informações constantes no documento. Talvez em LaTeX, posteriormente.
-4. (...)
+1. Ano/Sem:
+Não importa arquivo .txt. A importação só recohce o JSON.
+
+5. Atividades de Apoio ao Ensino
+Ao clicar em "Adicionar selecionadas", o horário só permite a inserção do horário inicial. A normativa pede hor. inicial e final.
+
+10. Observações
+Em "Baixar JSON" e "Baixar TXT", o local é especificado especificado pelo usuário. TALVEZ... fosse melhor um local padrão dentro da pasta do projeto, por exemplos, "PTDs Salvos"
+
+**GERAL**
+1. Gerar pdf, html ou docx/odt com as informações para publilcação no site institucional
+2. Se pdf ou docx/odt, criar campos para assinatura digital do gov.br após geração do arquivo
+3. Publicar automaticamente no site institucional?
