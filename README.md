@@ -59,7 +59,7 @@ Não importa arquivo .txt. A importação só recohce o JSON.
 Ao clicar em "Adicionar selecionadas", o horário só permite a inserção do horário inicial. A normativa pede hor. inicial e final.
 
 10. Observações
-Em "Baixar JSON" e "Baixar TXT", o local é especificado especificado pelo usuário. TALVEZ... fosse melhor um local padrão dentro da pasta do projeto, por exemplos, "PTDs Salvos"
+Em "Baixar JSON" e "Baixar TXT", o local é especificado pelo usuário. TALVEZ... fosse melhor um local padrão dentro da pasta do projeto, por exemplos, "PTDs Salvos"
 
 **GERAL**
 1. Gerar pdf, html ou docx/odt com as informações para publilcação no site institucional
